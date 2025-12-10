@@ -6,8 +6,8 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash
 import os
 import uuid
-from models import User
-from utils import allowed_file
+from app.models.models import User
+from app.utils.utils import allowed_file
 
 def init_profile_routes(app):
     """Initialize profile routes"""
