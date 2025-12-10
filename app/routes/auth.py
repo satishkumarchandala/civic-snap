@@ -13,40 +13,48 @@ def init_routes(app):
     def login():
         """User login"""
         if request.method == 'POST':
-            email = request.form['email']
-            password = request.form['password']
-            
-            user = User.get_by_email(email)
-            
-            if user and check_password_hash(user['password'], password):
-                # Get organization info if user has one
-                org_info = None
-                if user['organization_id']:
-                    org_info = Organization.get_by_id(user['organization_id'])
+            try:
+                email = request.form.get('email', '').strip()
+                password = request.form.get('password', '')
                 
-                session['user_id'] = user['id']
-                session['user_name'] = user['name']
-                session['user_email'] = user['email']
-                session['user_role'] = user['role']
-                session['organization_id'] = user['organization_id']
-                session['organization_category'] = org_info['category'] if org_info else None
-                session['organization_name'] = org_info['name'] if org_info else None
+                if not email or not password:
+                    flash('Please enter both email and password!', 'error')
+                    return render_template('login.html')
                 
-                # Backwards compatibility
-                session['is_admin'] = User.is_admin(user)
+                user = User.get_by_email(email)
                 
-                # Check profile completion status
-                session['profile_complete'] = User.is_profile_complete(user)
-                
-                flash('Login successful!', 'success')
-                
-                # Redirect based on role
-                if User.is_admin(user):
-                    return redirect(url_for('admin_panel'))
+                if user and check_password_hash(user['password'], password):
+                    # Get organization info if user has one
+                    org_info = None
+                    if user.get('organization_id'):
+                        org_info = Organization.get_by_id(user['organization_id'])
+                    
+                    session['user_id'] = user['id']
+                    session['user_name'] = user['name']
+                    session['user_email'] = user['email']
+                    session['user_role'] = user.get('role', 'citizen')
+                    session['organization_id'] = user.get('organization_id')
+                    session['organization_category'] = org_info.get('category') if org_info else None
+                    session['organization_name'] = org_info.get('name') if org_info else None
+                    
+                    # Backwards compatibility
+                    session['is_admin'] = User.is_admin(user)
+                    
+                    # Check profile completion status
+                    session['profile_complete'] = User.is_profile_complete(user)
+                    
+                    flash('Login successful!', 'success')
+                    
+                    # Redirect based on role
+                    if User.is_admin(user):
+                        return redirect(url_for('admin_panel'))
+                    else:
+                        return redirect(url_for('index'))
                 else:
-                    return redirect(url_for('index'))
-            else:
-                flash('Invalid email or password!', 'error')
+                    flash('Invalid email or password!', 'error')
+            except Exception as e:
+                print(f"Login error: {str(e)}")
+                flash('An error occurred during login. Please try again.', 'error')
         
         return render_template('login.html')
     
