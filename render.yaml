@@ -4,6 +4,8 @@ services:
     name: urban-issue-reporter
     runtime: python
     plan: free
+    repo: https://github.com/satishkumarchandala/civic-snap
+    branch: main
     buildCommand: pip install -r requirements-prod.txt
     startCommand: gunicorn --config deployment/gunicorn_config.py wsgi:app
     envVars:
