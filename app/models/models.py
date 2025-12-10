@@ -25,7 +25,12 @@ def get_db():
 
 def init_db():
     """Initialize MongoDB database with indexes and default data"""
-    db = get_db()
+    try:
+        db = get_db()
+        print("✅ MongoDB database initialized successfully")
+    except Exception as e:
+        print(f"❌ Failed to connect to MongoDB: {str(e)}")
+        raise
     
     # Create collections and indexes
     
