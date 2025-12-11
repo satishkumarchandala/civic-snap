@@ -211,7 +211,7 @@ def init_routes(app):
         
         return render_template('report.html')
     
-    @app.route('/issue/<int:issue_id>')
+    @app.route('/issue/<issue_id>')
     def issue_detail(issue_id):
         """Issue detail page"""
         # Get issue details
@@ -231,7 +231,7 @@ def init_routes(app):
         
         return render_template('issue_detail.html', issue=issue, comments=comments, user_has_upvoted=user_has_upvoted)
     
-    @app.route('/add_comment/<int:issue_id>', methods=['POST'])
+    @app.route('/add_comment/<issue_id>', methods=['POST'])
     def add_comment(issue_id):
         """Add comment to issue"""
         if 'user_id' not in session:
@@ -268,7 +268,7 @@ def init_routes(app):
         flash('Comment added successfully!', 'success')
         return redirect(url_for('issue_detail', issue_id=issue_id))
     
-    @app.route('/upvote/<int:issue_id>', methods=['POST'])
+    @app.route('/upvote/<issue_id>', methods=['POST'])
     def upvote_issue(issue_id):
         """Upvote an issue"""
         if 'user_id' not in session:

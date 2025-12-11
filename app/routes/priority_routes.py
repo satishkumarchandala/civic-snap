@@ -27,7 +27,7 @@ def init_priority_routes(app):
                              critical_issues=critical_issues,
                              high_priority_issues=high_priority_issues)
     
-    @app.route('/api/priority/calculate/<int:issue_id>', methods=['POST'])
+    @app.route('/api/priority/calculate/<issue_id>', methods=['POST'])
     def calculate_issue_priority(issue_id):
         """Calculate/recalculate priority for a specific issue"""
         if 'user_id' not in session:
@@ -159,7 +159,7 @@ def init_priority_routes(app):
                 'message': f'Error marking duplicate: {str(e)}'
             }), 500
     
-    @app.route('/api/priority/get-votes/<int:issue_id>')
+    @app.route('/api/priority/get-votes/<issue_id>')
     def get_issue_votes(issue_id):
         """Get voting data for an issue"""
         try:
@@ -265,7 +265,7 @@ def init_priority_routes(app):
                 'message': f'Error analyzing image: {str(e)}'
             }), 500
     
-    @app.route('/api/priority/find-similar/<int:issue_id>')
+    @app.route('/api/priority/find-similar/<issue_id>')
     def find_similar_issues(issue_id):
         """Find similar issues for duplicate detection"""
         try:

@@ -48,7 +48,7 @@ def init_routes(app):
                              current_user=current_user,
                              users_list=users_list)
     
-    @app.route('/update_status/<int:issue_id>', methods=['POST'])
+    @app.route('/update_status/<issue_id>', methods=['POST'])
     @admin_required
     def update_status(issue_id):
         """Update issue status (admin only with role-based access)"""
