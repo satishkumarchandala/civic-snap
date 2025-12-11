@@ -77,29 +77,48 @@ def init_profile_routes(app):
                     flash('Name is required!', 'error')
                     return render_template('profile.html', user=user, edit_mode=True)
                 
-                # Handle profile picture upload
+                # Handle profile picture upload with compression
                 profile_picture = user.get('profile_picture')  # Keep existing if no new upload
                 if 'profile_picture' in request.files:
                     file = request.files['profile_picture']
                     if file and file.filename and allowed_file(file.filename, {'png', 'jpg', 'jpeg', 'gif'}):
                         try:
-                            # Generate unique filename
-                            filename = f"profile_{uuid.uuid4().hex}_{secure_filename(file.filename)}"
-                            
-                            # Read file data and encode to base64
-                            file_data = file.read()
-                            image_base64 = base64.b64encode(file_data).decode('utf-8')
-                            
-                            # Get MIME type
-                            mime_type = file.content_type or 'image/jpeg'
-                            
-                            # Save image to MongoDB
+                            from PIL import Image
+                            import io
                             from datetime import datetime
+                            
+                            filename = f"profile_{uuid.uuid4().hex}.jpg"
+                            
+                            # Open and compress image
+                            img = Image.open(file.stream)
+                            
+                            # Convert to RGB if necessary
+                            if img.mode in ('RGBA', 'LA', 'P'):
+                                background = Image.new('RGB', img.size, (255, 255, 255))
+                                if img.mode == 'P':
+                                    img = img.convert('RGBA')
+                                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                                img = background
+                            
+                            # Resize to max 500px (profile pictures don't need to be large)
+                            max_size = 500
+                            if img.width > max_size or img.height > max_size:
+                                img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+                            
+                            # Compress
+                            img_byte_arr = io.BytesIO()
+                            img.save(img_byte_arr, format='JPEG', quality=80, optimize=True)
+                            img_byte_arr.seek(0)
+                            
+                            # Encode to base64
+                            image_base64 = base64.b64encode(img_byte_arr.read()).decode('utf-8')
+                            
+                            # Save to MongoDB
                             db = get_db_connection()
                             db.images.insert_one({
                                 'filename': filename,
                                 'image_data': image_base64,
-                                'mime_type': mime_type,
+                                'mime_type': 'image/jpeg',
                                 'created_at': datetime.utcnow()
                             })
                             

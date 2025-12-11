@@ -113,30 +113,54 @@ def init_routes(app):
             longitude = float(request.form['longitude'])
             address = request.form['address']
             
-            # Handle file upload
+            # Handle file upload with compression
             image_filename = None
             if 'image' in request.files:
                 file = request.files['image']
                 if file and file.filename and allowed_file(file.filename):
-                    filename = str(uuid.uuid4()) + '.' + file.filename.rsplit('.', 1)[1].lower()
-                    
-                    # Read file data and encode to base64
-                    file_data = file.read()
-                    image_base64 = base64.b64encode(file_data).decode('utf-8')
-                    
-                    # Get MIME type
-                    mime_type = file.content_type or 'image/jpeg'
-                    
-                    # Save image to MongoDB
-                    db = get_db_connection()
-                    db.images.insert_one({
-                        'filename': filename,
-                        'image_data': image_base64,
-                        'mime_type': mime_type,
-                        'created_at': datetime.utcnow()
-                    })
-                    
-                    image_filename = filename
+                    try:
+                        from PIL import Image
+                        import io
+                        
+                        filename = str(uuid.uuid4()) + '.jpg'  # Always save as JPEG
+                        
+                        # Open and compress image
+                        img = Image.open(file.stream)
+                        
+                        # Convert RGBA to RGB if necessary
+                        if img.mode in ('RGBA', 'LA', 'P'):
+                            background = Image.new('RGB', img.size, (255, 255, 255))
+                            if img.mode == 'P':
+                                img = img.convert('RGBA')
+                            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                            img = background
+                        
+                        # Resize if too large (max 1200px width/height)
+                        max_size = 1200
+                        if img.width > max_size or img.height > max_size:
+                            img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+                        
+                        # Compress and save to bytes
+                        img_byte_arr = io.BytesIO()
+                        img.save(img_byte_arr, format='JPEG', quality=85, optimize=True)
+                        img_byte_arr.seek(0)
+                        
+                        # Encode to base64
+                        image_base64 = base64.b64encode(img_byte_arr.read()).decode('utf-8')
+                        
+                        # Save to MongoDB
+                        db = get_db_connection()
+                        db.images.insert_one({
+                            'filename': filename,
+                            'image_data': image_base64,
+                            'mime_type': 'image/jpeg',
+                            'created_at': datetime.utcnow()
+                        })
+                        
+                        image_filename = filename
+                    except Exception as e:
+                        print(f"Error processing image: {e}")
+                        flash('Error uploading image. Please try a different image.', 'warning')
             
             # Save to database
             issue_id = Issue.create(title, description, category, priority, latitude, longitude, 

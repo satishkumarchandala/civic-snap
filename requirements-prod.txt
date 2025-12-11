@@ -24,3 +24,6 @@ waitress==2.1.2
 
 # Security
 email-validator==2.1.0.post1
+
+# Image Processing
+Pillow==10.3.0
