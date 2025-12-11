@@ -6,7 +6,8 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash
 import os
 import uuid
-from app.models.models import User
+import base64
+from app.models.models import User, get_db_connection
 from app.utils.utils import allowed_file
 
 def init_profile_routes(app):
@@ -84,21 +85,30 @@ def init_profile_routes(app):
                         try:
                             # Generate unique filename
                             filename = f"profile_{uuid.uuid4().hex}_{secure_filename(file.filename)}"
-                            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                             
-                            # Ensure upload folder exists
-                            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                            # Read file data and encode to base64
+                            file_data = file.read()
+                            image_base64 = base64.b64encode(file_data).decode('utf-8')
                             
-                            file.save(file_path)
+                            # Get MIME type
+                            mime_type = file.content_type or 'image/jpeg'
                             
-                            # Delete old profile picture if exists
+                            # Save image to MongoDB
+                            from datetime import datetime
+                            db = get_db_connection()
+                            db.images.insert_one({
+                                'filename': filename,
+                                'image_data': image_base64,
+                                'mime_type': mime_type,
+                                'created_at': datetime.utcnow()
+                            })
+                            
+                            # Delete old profile picture from database if exists
                             if profile_picture and profile_picture != 'default-avatar.png':
-                                old_path = os.path.join(app.config['UPLOAD_FOLDER'], profile_picture)
-                                if os.path.exists(old_path):
-                                    try:
-                                        os.remove(old_path)
-                                    except:
-                                        pass  # Ignore if can't delete old file
+                                try:
+                                    db.images.delete_one({'filename': profile_picture})
+                                except:
+                                    pass  # Ignore if can't delete old image
                             
                             profile_picture = filename
                         except Exception as e:

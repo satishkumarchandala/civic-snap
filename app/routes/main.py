@@ -1,10 +1,12 @@
 """
 Main application routes - home, issues, and general functionality
 """
-from flask import render_template, request, jsonify, redirect, url_for, flash, session, send_from_directory
+from flask import render_template, request, jsonify, redirect, url_for, flash, session, send_from_directory, Response
 from werkzeug.utils import secure_filename
+from datetime import datetime
 import os
 import uuid
+import base64
 from app.models.models import Issue, Comment, User, get_db_connection
 from app.utils.utils import send_email_notification, generate_issue_report_email, generate_comment_email, allowed_file
 
@@ -18,8 +20,22 @@ def init_routes(app):
     
     @app.route('/uploads/<filename>')
     def uploaded_file(filename):
-        """Serve uploaded images"""
-        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+        """Serve uploaded images from database"""
+        # Get image from database
+        db = get_db_connection()
+        image_doc = db.images.find_one({'filename': filename})
+        
+        if image_doc and image_doc.get('image_data'):
+            # Decode base64 image data
+            image_binary = base64.b64decode(image_doc['image_data'])
+            return Response(image_binary, mimetype=image_doc.get('mime_type', 'image/jpeg'))
+        
+        # Fallback: try to serve from file system if exists (for backward compatibility)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        if os.path.exists(file_path):
+            return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+        
+        return 'Image not found', 404
     
     @app.route('/')
     def index():
@@ -103,7 +119,23 @@ def init_routes(app):
                 file = request.files['image']
                 if file and file.filename and allowed_file(file.filename):
                     filename = str(uuid.uuid4()) + '.' + file.filename.rsplit('.', 1)[1].lower()
-                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    
+                    # Read file data and encode to base64
+                    file_data = file.read()
+                    image_base64 = base64.b64encode(file_data).decode('utf-8')
+                    
+                    # Get MIME type
+                    mime_type = file.content_type or 'image/jpeg'
+                    
+                    # Save image to MongoDB
+                    db = get_db_connection()
+                    db.images.insert_one({
+                        'filename': filename,
+                        'image_data': image_base64,
+                        'mime_type': mime_type,
+                        'created_at': datetime.utcnow()
+                    })
+                    
                     image_filename = filename
             
             # Save to database
@@ -120,7 +152,7 @@ def init_routes(app):
                 # Analyze image if present
                 if image_filename:
                     ai_severity = ImageAnalysis.analyze_issue_image(
-                        os.path.join(app.config['UPLOAD_FOLDER'], image_filename), 
+                        image_filename, 
                         category
                     )
                     if ai_severity:

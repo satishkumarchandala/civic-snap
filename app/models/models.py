@@ -72,6 +72,10 @@ def init_db():
     db.priority_logs.create_index([("issue_id", ASCENDING)])
     db.priority_logs.create_index([("created_at", DESCENDING)])
     
+    # Images collection (for storing base64 encoded images)
+    db.images.create_index([("filename", ASCENDING)], unique=True)
+    db.images.create_index([("created_at", DESCENDING)])
+    
     # Create default organizations if not exist
     organizations_data = [
         {'name': 'Government Main Body', 'category': 'general', 'description': 'Main government administrative body'},
