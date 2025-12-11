@@ -95,9 +95,17 @@ def init_routes(app):
     @admin_required
     def issues_map():
         """Admin Issues Map - View issues based on role and organization"""
-        current_user = get_current_user_info()
-        user_role = current_user['role']
-        org_category = current_user['organization_category']
+        try:
+            current_user = get_current_user_info()
+            print(f"🔍 Current user: {current_user}")
+            user_role = current_user.get('role', 'user') if current_user else 'user'
+            org_category = current_user.get('organization_category') if current_user else None
+            print(f"🔍 User role: {user_role}, Org category: {org_category}")
+        except Exception as e:
+            print(f"❌ ERROR getting current user: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            raise
         
         # Get issues based on user role and organization
         map_issues = []
