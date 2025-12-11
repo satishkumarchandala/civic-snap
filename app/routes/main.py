@@ -40,13 +40,19 @@ def init_routes(app):
     @app.route('/')
     def index():
         """Home page with issue listing and statistics"""
+        print("🔍 INDEX ROUTE CALLED")
         try:
+            print("🔍 Getting statistics...")
             # Get statistics for the homepage - count only regular citizens, not admins
             total_users = User.get_citizen_count()
+            print(f"🔍 Total users: {total_users}")
             total_issues = Issue.get_count()
+            print(f"🔍 Total issues: {total_issues}")
         except Exception as e:
+            print(f"❌ ERROR getting statistics: {str(e)}")
             app.logger.error(f"Error getting statistics: {str(e)}")
             import traceback
+            print(traceback.format_exc())
             app.logger.error(traceback.format_exc())
             total_users = 0
             total_issues = 0
