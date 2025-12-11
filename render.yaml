@@ -7,12 +7,10 @@ services:
     repo: https://github.com/satishkumarchandala/civic-snap
     branch: main
     buildCommand: pip install -r requirements-prod.txt
-    startCommand: gunicorn --config deployment/gunicorn_config.py wsgi:app
+    startCommand: gunicorn wsgi:app --workers 1 --threads 2 --timeout 300 --max-requests 1000 --max-requests-jitter 50 --worker-class gthread --worker-tmp-dir /dev/shm
     envVars:
       - key: FLASK_ENV
         value: production
-      - key: PYTHON_VERSION
-        value: 3.12.0
       - key: SECRET_KEY
         generateValue: true
       - key: MONGO_URI
