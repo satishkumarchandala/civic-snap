@@ -40,9 +40,16 @@ def init_routes(app):
     @app.route('/')
     def index():
         """Home page with issue listing and statistics"""
-        # Get statistics for the homepage - count only regular citizens, not admins
-        total_users = User.get_citizen_count()
-        total_issues = Issue.get_count()
+        try:
+            # Get statistics for the homepage - count only regular citizens, not admins
+            total_users = User.get_citizen_count()
+            total_issues = Issue.get_count()
+        except Exception as e:
+            app.logger.error(f"Error getting statistics: {str(e)}")
+            import traceback
+            app.logger.error(traceback.format_exc())
+            total_users = 0
+            total_issues = 0
         
         # Get filters from query params
         category = request.args.get('category', '')
