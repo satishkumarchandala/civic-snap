@@ -156,7 +156,7 @@
                 
                 <div style="margin-left: auto; color: #000;">
                     <i class="fas fa-user"></i> Reported by: {{ issue.reporter_name or 'Anonymous' }} |
-                    <i class="fas fa-calendar"></i> {{ issue.created_at[:19] }}
+                    <i class="fas fa-calendar"></i> {{ issue.created_at.strftime('%Y-%m-%d %H:%M:%S') if issue.created_at.strftime else issue.created_at|string|truncate(19, True, '') }}
                 </div>
             </div>
         </div>
@@ -215,7 +215,7 @@
                             {% endif %}
                         </div>
                         <small style="color: #000;">
-                            <i class="fas fa-clock"></i> {{ comment.created_at[:19] }}
+                            <i class="fas fa-clock"></i> {{ comment.created_at.strftime('%Y-%m-%d %H:%M:%S') if comment.created_at.strftime else comment.created_at|string|truncate(19, True, '') }}
                         </small>
                     </div>
                     <p style="margin: 0; line-height: 1.6; color: #000;">{{ comment.content }}</p>

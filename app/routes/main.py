@@ -40,22 +40,9 @@ def init_routes(app):
     @app.route('/')
     def index():
         """Home page with issue listing and statistics"""
-        print("🔍 INDEX ROUTE CALLED")
-        try:
-            print("🔍 Getting statistics...")
-            # Get statistics for the homepage - count only regular citizens, not admins
-            total_users = User.get_citizen_count()
-            print(f"🔍 Total users: {total_users}")
-            total_issues = Issue.get_count()
-            print(f"🔍 Total issues: {total_issues}")
-        except Exception as e:
-            print(f"❌ ERROR getting statistics: {str(e)}")
-            app.logger.error(f"Error getting statistics: {str(e)}")
-            import traceback
-            print(traceback.format_exc())
-            app.logger.error(traceback.format_exc())
-            total_users = 0
-            total_issues = 0
+        # Get statistics for the homepage - count only regular citizens, not admins
+        total_users = User.get_citizen_count()
+        total_issues = Issue.get_count()
         
         # Get filters from query params
         category = request.args.get('category', '')
@@ -94,30 +81,13 @@ def init_routes(app):
         if user_org_category and not category:
             category = user_org_category
         
-        print(f"🔍 Getting issues with filters - category: {category}, status: {status}, search: {search}")
         # Get filtered issues
-        try:
-            issues = Issue.get_all(category, status, search)
-            print(f"🔍 Found {len(issues)} issues")
-        except Exception as e:
-            print(f"❌ ERROR getting issues: {str(e)}")
-            import traceback
-            print(traceback.format_exc())
-            raise
+        issues = Issue.get_all(category, status, search)
         
-        print("🔍 Rendering template...")
-        try:
-            result = render_template('index.html', issues=issues, 
-                                 current_category=category, current_status=status, search_term=search,
-                                 total_users=total_users, total_issues=total_issues,
-                                 user_org_category=user_org_category)
-            print("✅ Template rendered successfully")
-            return result
-        except Exception as e:
-            print(f"❌ ERROR rendering template: {str(e)}")
-            import traceback
-            print(traceback.format_exc())
-            raise
+        return render_template('index.html', issues=issues, 
+                             current_category=category, current_status=status, search_term=search,
+                             total_users=total_users, total_issues=total_issues,
+                             user_org_category=user_org_category)
     
     @app.route('/report', methods=['GET', 'POST'])
     def report_issue():

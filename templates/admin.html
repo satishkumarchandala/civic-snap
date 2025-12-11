@@ -220,8 +220,8 @@
                             </td>
                             <td style="padding: 1rem;">
                                 <div>
-                                    <strong>{{ issue.created_at[:10] }}</strong><br>
-                                    <small style="color: #666;">{{ issue.created_at[11:16] }}</small>
+                                    <strong>{{ issue.created_at.strftime('%Y-%m-%d') if issue.created_at.strftime else issue.created_at|string|truncate(10, True, '') }}</strong><br>
+                                    <small style="color: #666;">{{ issue.created_at.strftime('%H:%M') if issue.created_at.strftime else '' }}</small>
                                 </div>
                             </td>
                             <td style="padding: 1rem;">
