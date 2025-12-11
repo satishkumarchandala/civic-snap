@@ -126,26 +126,36 @@ def init_routes(app):
         
         # Filter out issues without valid coordinates and prepare for map
         print(f"🔍 Processing issues for map...")
-        for issue in all_issues:
-            if issue['latitude'] and issue['longitude']:
-                # Convert datetime to string for JavaScript compatibility
-                created_at_str = issue['created_at'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(issue['created_at'], 'strftime') else str(issue['created_at'])
-                
-                map_issues.append({
-                    'id': issue['id'],
-                    'title': issue['title'],
-                    'description': issue['description'],
-                    'category': issue['category'],
-                    'status': issue['status'],
-                    'priority': issue['priority'],
-                    'latitude': float(issue['latitude']),
-                    'longitude': float(issue['longitude']),
-                    'address': issue['address'],
-                    'reporter_name': issue['reporter_name'],
-                    'upvotes': issue['upvotes'],
-                    'created_at': created_at_str,
-                    'image_filename': issue['image_filename']
-                })
+        try:
+            for i, issue in enumerate(all_issues):
+                print(f"🔍 Processing issue {i+1}: {issue.get('title', 'NO TITLE')}")
+                if issue.get('latitude') and issue.get('longitude'):
+                    # Convert datetime to string for JavaScript compatibility
+                    created_at_str = issue['created_at'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(issue['created_at'], 'strftime') else str(issue['created_at'])
+                    
+                    map_issues.append({
+                        'id': issue['id'],
+                        'title': issue['title'],
+                        'description': issue['description'],
+                        'category': issue['category'],
+                        'status': issue['status'],
+                        'priority': issue['priority'],
+                        'latitude': float(issue['latitude']),
+                        'longitude': float(issue['longitude']),
+                        'address': issue['address'],
+                        'reporter_name': issue.get('reporter_name', 'Anonymous'),
+                        'upvotes': issue.get('upvotes', 0),
+                        'created_at': created_at_str,
+                        'image_filename': issue.get('image_filename', '')
+                    })
+                    print(f"✅ Added issue {i+1} to map")
+                else:
+                    print(f"⚠️ Skipping issue {i+1} - no coordinates")
+        except Exception as e:
+            print(f"❌ ERROR processing issue {i+1}: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            raise
         
         return render_template('issues_map.html', 
                              issues=map_issues, 
