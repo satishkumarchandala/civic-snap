@@ -383,7 +383,7 @@ class Issue:
         """Create new issue with ML predictions"""
         # Try to import ML models (graceful fallback if not available)
         try:
-            from ml_models import get_ml_predictions
+            from app.services.ml_service import get_ml_predictions
             ml_available = True
         except ImportError:
             print("⚠️  ML models not available, using provided values")
