@@ -111,6 +111,9 @@ def init_routes(app):
         # Filter out issues without valid coordinates and prepare for map
         for issue in all_issues:
             if issue['latitude'] and issue['longitude']:
+                # Convert datetime to string for JavaScript compatibility
+                created_at_str = issue['created_at'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(issue['created_at'], 'strftime') else str(issue['created_at'])
+                
                 map_issues.append({
                     'id': issue['id'],
                     'title': issue['title'],
@@ -123,7 +126,7 @@ def init_routes(app):
                     'address': issue['address'],
                     'reporter_name': issue['reporter_name'],
                     'upvotes': issue['upvotes'],
-                    'created_at': issue['created_at'],
+                    'created_at': created_at_str,
                     'image_filename': issue['image_filename']
                 })
         
