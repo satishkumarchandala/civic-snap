@@ -30,7 +30,7 @@
                     {% else %}Citizen{% endif %}
                 </p>
                 {% if user.created_at %}
-                    <p class="profile-joined"><i class="fas fa-calendar-alt"></i> Member since {{ user.created_at[:10] }}</p>
+                    <p class="profile-joined"><i class="fas fa-calendar-alt"></i> Member since {{ user.created_at.strftime('%Y-%m-%d') if user.created_at.strftime else user.created_at|string|truncate(10, True, '') }}</p>
                 {% endif %}
             </div>
             <div class="profile-actions">
