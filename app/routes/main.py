@@ -94,13 +94,30 @@ def init_routes(app):
         if user_org_category and not category:
             category = user_org_category
         
+        print(f"🔍 Getting issues with filters - category: {category}, status: {status}, search: {search}")
         # Get filtered issues
-        issues = Issue.get_all(category, status, search)
+        try:
+            issues = Issue.get_all(category, status, search)
+            print(f"🔍 Found {len(issues)} issues")
+        except Exception as e:
+            print(f"❌ ERROR getting issues: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            raise
         
-        return render_template('index.html', issues=issues, 
-                             current_category=category, current_status=status, search_term=search,
-                             total_users=total_users, total_issues=total_issues,
-                             user_org_category=user_org_category)
+        print("🔍 Rendering template...")
+        try:
+            result = render_template('index.html', issues=issues, 
+                                 current_category=category, current_status=status, search_term=search,
+                                 total_users=total_users, total_issues=total_issues,
+                                 user_org_category=user_org_category)
+            print("✅ Template rendered successfully")
+            return result
+        except Exception as e:
+            print(f"❌ ERROR rendering template: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            raise
     
     @app.route('/report', methods=['GET', 'POST'])
     def report_issue():
