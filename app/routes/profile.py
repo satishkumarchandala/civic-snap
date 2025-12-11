@@ -19,25 +19,37 @@ def init_profile_routes(app):
             flash('Please login to view your profile!', 'error')
             return redirect(url_for('login'))
         
-        user = User.get_by_id(session['user_id'])
-        if not user:
-            flash('User not found!', 'error')
-            return redirect(url_for('login'))
-        
-        # Get user statistics
-        from app.models.models import Issue, Comment
-        user_issues_count = Issue.get_count_by_user(session['user_id'])
-        user_comments_count = Comment.get_count_by_user(session['user_id'])
-        
-        # Check profile completion status
-        is_profile_complete = User.is_profile_complete(user)
-        missing_fields = User.get_missing_profile_fields(user) if not is_profile_complete else []
-        
-        return render_template('profile.html', user=user, 
-                             user_issues_count=user_issues_count,
-                             user_comments_count=user_comments_count,
-                             is_profile_complete=is_profile_complete,
-                             missing_fields=missing_fields)
+        try:
+            user = User.get_by_id(session['user_id'])
+            if not user:
+                flash('User not found!', 'error')
+                return redirect(url_for('login'))
+            
+            # Get user statistics
+            from app.models.models import Issue, Comment
+            try:
+                user_issues_count = Issue.get_count_by_user(session['user_id'])
+                user_comments_count = Comment.get_count_by_user(session['user_id'])
+            except Exception as e:
+                print(f"Error getting user statistics: {str(e)}")
+                user_issues_count = 0
+                user_comments_count = 0
+            
+            # Check profile completion status
+            is_profile_complete = User.is_profile_complete(user)
+            missing_fields = User.get_missing_profile_fields(user) if not is_profile_complete else []
+            
+            return render_template('profile.html', user=user, 
+                                 user_issues_count=user_issues_count,
+                                 user_comments_count=user_comments_count,
+                                 is_profile_complete=is_profile_complete,
+                                 missing_fields=missing_fields)
+        except Exception as e:
+            print(f"Profile error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            flash('Error loading profile. Please try again.', 'error')
+            return redirect(url_for('index'))
     
     @app.route('/profile/edit', methods=['GET', 'POST'])
     def edit_profile():
