@@ -68,14 +68,13 @@ def init_routes(app):
             if user and (User.is_org_admin(user) or User.is_org_staff(user)):
                 # Get user's organization category to filter issues
                 if user.get('organization_id'):
-                    conn = get_db_connection()
-                    org = conn.execute("SELECT category FROM organizations WHERE id = ?", 
-                                     (user['organization_id'],)).fetchone()
+                    db = get_db_connection()
+                    from bson.objectid import ObjectId
+                    org = db.organizations.find_one({'_id': ObjectId(user['organization_id'])})
                     if org:
                         org_category = org['category']
                         # Map organization category to issue category
                         user_org_category = org_to_issue_category_map.get(org_category)
-                    conn.close()
         
         # If user is org admin/staff and no category filter is specified, 
         # filter by their organization category (unless they're general admin)
@@ -149,7 +148,8 @@ def init_routes(app):
                         image_base64 = base64.b64encode(img_byte_arr.read()).decode('utf-8')
                         
                         # Save to MongoDB
-                        db = get_db_connection()
+                        from app.models.models import get_db_connection as get_db
+                        db = get_db()
                         db.images.insert_one({
                             'filename': filename,
                             'image_data': image_base64,
@@ -160,6 +160,8 @@ def init_routes(app):
                         image_filename = filename
                     except Exception as e:
                         print(f"Error processing image: {e}")
+                        import traceback
+                        traceback.print_exc()
                         flash('Error uploading image. Please try a different image.', 'warning')
             
             # Save to database
@@ -168,7 +170,7 @@ def init_routes(app):
             
             # Calculate initial priority score
             try:
-                from priority_scoring import PriorityScoring, ImageAnalysis
+                from app.services.priority_scoring import PriorityScoring, ImageAnalysis
                 
                 # Get the created issue
                 issue = Issue.get_by_id(issue_id)
@@ -181,14 +183,12 @@ def init_routes(app):
                     )
                     if ai_severity:
                         # Update issue with AI severity score
-                        from models import get_db_connection
-                        conn = get_db_connection()
-                        conn.execute(
-                            "UPDATE issues SET ai_severity_score = ? WHERE id = ?",
-                            (ai_severity, issue_id)
+                        db = get_db_connection()
+                        from bson.objectid import ObjectId
+                        db.issues.update_one(
+                            {'_id': ObjectId(issue_id)},
+                            {'$set': {'ai_severity_score': ai_severity}}
                         )
-                        conn.commit()
-                        conn.close()
                         
                         # Refresh issue data
                         issue = Issue.get_by_id(issue_id)

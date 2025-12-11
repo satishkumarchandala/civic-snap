@@ -14,15 +14,15 @@ def init_routes(app):
     def admin_panel():
         """Admin dashboard with role-based access"""
         current_user = get_current_user_info()
-        user_role = current_user['role']
-        org_category = current_user['organization_category']
+        user_role = current_user.get('role', 'user') if current_user else 'user'
+        org_category = current_user.get('organization_category') if current_user else None
         
         # Get filtered statistics based on role
         if user_role == 'super_admin':
             # Super admin sees all issues
             stats = Issue.get_stats()
             all_issues = Issue.get_all()  # Get all issues instead of just recent ones
-        else:
+        elif org_category:
             # Organization admin/staff see only their category issues
             org_issues = Issue.get_by_category(org_category)
             stats = {
