@@ -109,14 +109,23 @@ def init_routes(app):
         
         # Get issues based on user role and organization
         map_issues = []
-        if user_role == 'super_admin':
-            # Super admin sees all issues
-            all_issues = Issue.get_all()
-        else:
-            # Organization admin/staff see only their category issues
-            all_issues = Issue.get_by_category(org_category)
+        try:
+            print(f"🔍 Getting issues for role: {user_role}")
+            if user_role == 'super_admin':
+                # Super admin sees all issues
+                all_issues = Issue.get_all()
+            else:
+                # Organization admin/staff see only their category issues
+                all_issues = Issue.get_by_category(org_category)
+            print(f"🔍 Got {len(all_issues)} issues")
+        except Exception as e:
+            print(f"❌ ERROR getting issues: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            raise
         
         # Filter out issues without valid coordinates and prepare for map
+        print(f"🔍 Processing issues for map...")
         for issue in all_issues:
             if issue['latitude'] and issue['longitude']:
                 # Convert datetime to string for JavaScript compatibility
