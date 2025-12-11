@@ -25,7 +25,7 @@ def init_profile_routes(app):
             return redirect(url_for('login'))
         
         # Get user statistics
-        from models import Issue, Comment
+        from app.models.models import Issue, Comment
         user_issues_count = Issue.get_count_by_user(session['user_id'])
         user_comments_count = Comment.get_count_by_user(session['user_id'])
         
@@ -69,18 +69,29 @@ def init_profile_routes(app):
                 if 'profile_picture' in request.files:
                     file = request.files['profile_picture']
                     if file and file.filename and allowed_file(file.filename, {'png', 'jpg', 'jpeg', 'gif'}):
-                        # Generate unique filename
-                        filename = f"profile_{uuid.uuid4().hex}_{secure_filename(file.filename)}"
-                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                        file.save(file_path)
-                        
-                        # Delete old profile picture if exists
-                        if profile_picture and profile_picture != 'default-avatar.png':
-                            old_path = os.path.join(app.config['UPLOAD_FOLDER'], profile_picture)
-                            if os.path.exists(old_path):
-                                os.remove(old_path)
-                        
-                        profile_picture = filename
+                        try:
+                            # Generate unique filename
+                            filename = f"profile_{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+                            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                            
+                            # Ensure upload folder exists
+                            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                            
+                            file.save(file_path)
+                            
+                            # Delete old profile picture if exists
+                            if profile_picture and profile_picture != 'default-avatar.png':
+                                old_path = os.path.join(app.config['UPLOAD_FOLDER'], profile_picture)
+                                if os.path.exists(old_path):
+                                    try:
+                                        os.remove(old_path)
+                                    except:
+                                        pass  # Ignore if can't delete old file
+                            
+                            profile_picture = filename
+                        except Exception as e:
+                            print(f"Error uploading profile picture: {str(e)}")
+                            flash('Error uploading profile picture, but profile will be updated without it.', 'warning')
                 
                 # Update profile
                 User.update_profile(
@@ -101,6 +112,9 @@ def init_profile_routes(app):
                 return redirect(url_for('profile'))
                 
             except Exception as e:
+                print(f"Error updating profile: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 flash(f'Error updating profile: {str(e)}', 'error')
                 return render_template('profile.html', user=user, edit_mode=True)
         
