@@ -142,7 +142,7 @@
                         <span id="upvotes-{{ issue.id }}">{{ issue.upvotes }}</span> Already Upvoted
                     </button>
                     {% else %}
-                    <button class="upvote-btn" onclick="upvoteIssue({{ issue.id }})" title="Click to upvote this issue">
+                    <button class="upvote-btn" onclick="upvoteIssue('{{ issue.id }}')" title="Click to upvote this issue">
                         <i class="fas fa-thumbs-up"></i>
                         <span id="upvotes-{{ issue.id }}">{{ issue.upvotes }}</span> Upvotes
                     </button>
@@ -295,15 +295,16 @@ async function upvoteIssue(issueId) {
         
         if (data.success) {
             // Update the upvote count and disable button
-            const button = document.querySelector(`button[onclick="upvoteIssue(${issueId})"]`);
+            const button = document.querySelector(`button[onclick="upvoteIssue('${issueId}')"]`);
             button.innerHTML = `<i class="fas fa-thumbs-up"></i> <span id="upvotes-${issueId}">${data.upvotes}</span> Already Upvoted`;
             button.disabled = true;
             button.classList.add('upvoted');
             button.title = 'You have already upvoted this issue';
             button.removeAttribute('onclick');
             
-            // Show success message
-            alert('Thank you for your upvote!');
+            // Brief visual feedback
+            button.style.transform = 'scale(1.1)';
+            setTimeout(() => button.style.transform = 'scale(1)', 200);
         } else if (data.already_upvoted) {
             alert('You have already upvoted this issue!');
         } else {

@@ -146,7 +146,7 @@
                 {% endif %}
                 
                 <div class="issue-actions">
-                    <button class="upvote-btn" onclick="upvoteIssue({{ issue.id }})">
+                    <button class="upvote-btn" onclick="upvoteIssue('{{ issue.id }}')">
                         <i class="fas fa-thumbs-up"></i>
                         <span id="upvotes-{{ issue.id }}">{{ issue.upvotes }}</span>
                     </button>
@@ -200,14 +200,36 @@ async function upvoteIssue(issueId) {
             }
         });
         
-        if (response.ok) {
-            const data = await response.json();
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update the upvote count
             document.getElementById(`upvotes-${issueId}`).textContent = data.upvotes;
+            // Disable the button
+            const button = event.target.closest('button');
+            if (button) {
+                button.disabled = true;
+                button.classList.add('upvoted');
+                button.title = 'You have already upvoted this issue';
+                // Brief visual feedback
+                button.style.transform = 'scale(1.1)';
+                setTimeout(() => button.style.transform = 'scale(1)', 200);
+            }
+        } else if (data.already_upvoted) {
+            alert('You have already upvoted this issue!');
         } else {
-            alert('Error: Please try again');
+            // Check if it's a profile completion error
+            if (data.error && data.error.toLowerCase().includes('profile')) {
+                if (confirm(data.error + '\n\nWould you like to complete your profile now?')) {
+                    window.location.href = '/profile';
+                }
+            } else {
+                alert(data.error || 'Failed to upvote. Please try again.');
+            }
         }
     } catch (error) {
-        alert('Error: Please try again');
+        console.error('Error:', error);
+        alert('An error occurred while upvoting. Please try again.');
     }
     {% else %}
     alert('Please login to upvote issues!');

@@ -3,6 +3,7 @@ Main application routes - home, issues, and general functionality
 """
 from flask import render_template, request, jsonify, redirect, url_for, flash, session, send_from_directory, Response
 from werkzeug.utils import secure_filename
+from markupsafe import escape
 from datetime import datetime
 import os
 import uuid
@@ -104,13 +105,42 @@ def init_routes(app):
             return redirect(url_for('profile'))
         
         if request.method == 'POST':
-            title = request.form['title']
-            description = request.form['description']
-            category = request.form['category']
-            priority = request.form['priority']
-            latitude = float(request.form['latitude'])
-            longitude = float(request.form['longitude'])
-            address = request.form['address']
+            # Input validation
+            title = request.form.get('title', '').strip()
+            description = request.form.get('description', '').strip()
+            category = request.form.get('category', '').strip()
+            priority = request.form.get('priority', '').strip()
+            address = request.form.get('address', '').strip()
+            
+            # Validate required fields
+            if not all([title, description, category, priority, address]):
+                flash('All fields are required!', 'error')
+                return render_template('report.html')
+            
+            if len(title) < 5 or len(title) > 200:
+                flash('Title must be between 5 and 200 characters!', 'error')
+                return render_template('report.html')
+            
+            if len(description) < 10:
+                flash('Description must be at least 10 characters!', 'error')
+                return render_template('report.html')
+            
+            # Validate coordinates
+            try:
+                latitude = float(request.form.get('latitude', 0))
+                longitude = float(request.form.get('longitude', 0))
+                
+                # Basic coordinate validation
+                if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
+                    flash('Invalid GPS coordinates!', 'error')
+                    return render_template('report.html')
+                
+                if latitude == 0 and longitude == 0:
+                    flash('Please select a location on the map!', 'error')
+                    return render_template('report.html')
+            except (ValueError, TypeError):
+                flash('Invalid GPS coordinates!', 'error')
+                return render_template('report.html')
             
             # Handle file upload with compression
             image_filename = None
@@ -246,7 +276,21 @@ def init_routes(app):
                 flash(f'Please complete your profile before commenting. Missing: {", ".join(missing_fields)}', 'error')
                 return redirect(url_for('profile'))
         
-        content = request.form['content']
+        content = request.form.get('content', '').strip()
+        
+        # Validate comment content
+        if not content:
+            flash('Comment cannot be empty!', 'error')
+            return redirect(url_for('issue_detail', issue_id=issue_id))
+        
+        if len(content) < 3:
+            flash('Comment must be at least 3 characters!', 'error')
+            return redirect(url_for('issue_detail', issue_id=issue_id))
+        
+        if len(content) > 1000:
+            flash('Comment is too long (max 1000 characters)!', 'error')
+            return redirect(url_for('issue_detail', issue_id=issue_id))
+        
         is_official = 1 if session.get('is_admin') else 0
         
         # Add comment
