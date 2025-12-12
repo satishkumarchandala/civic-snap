@@ -124,10 +124,15 @@
             </div>
             
             {% if issue.image_filename %}
-            <div style="margin: 2rem 0;">
+            <div style="margin: 2rem 0;" id="image-container">
                 <img src="{{ url_for('uploaded_file', filename=issue.image_filename) }}" 
                      alt="Issue Image" 
-                     style="max-width: 100%; height: auto; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1);">
+                     style="max-width: 100%; height: auto; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1);"
+                     onerror="this.style.display='none'; document.getElementById('image-error').style.display='block';">
+                <div id="image-error" style="display: none; padding: 2rem; background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; text-align: center;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ff9800; margin-bottom: 1rem;"></i>
+                    <p style="color: #856404; margin: 0;">Image not available. This issue was created before the new image storage system.</p>
+                </div>
             </div>
             {% endif %}
             

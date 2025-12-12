@@ -41,15 +41,22 @@ def init_routes(app):
                 image_binary = base64.b64decode(image_doc['image_data'])
                 return Response(image_binary, mimetype=image_doc.get('mime_type', 'image/jpeg'))
             except Exception as e:
-                print(f"Error decoding image {filename}: {e}")
+                app.logger.error(f"Error decoding image {filename}: {e}")
                 return 'Error decoding image', 500
         
         # Fallback: try to serve from file system if exists (for backward compatibility)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         if os.path.exists(file_path):
+            app.logger.info(f"Serving image from filesystem: {filename}")
             return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
         
-        print(f"Image not found in database or filesystem: {filename}")
+        # Check if this is a very old issue - try uploads directory
+        uploads_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'uploads', filename)
+        if os.path.exists(uploads_path):
+            app.logger.info(f"Serving legacy image: {filename}")
+            return send_from_directory(os.path.dirname(uploads_path), filename)
+        
+        app.logger.warning(f"Image not found: {filename} (not in database or filesystem)")
         return 'Image not found', 404
     
     @app.route('/')
