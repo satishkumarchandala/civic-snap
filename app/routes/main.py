@@ -19,6 +19,15 @@ def init_routes(app):
         """Health check endpoint for monitoring"""
         return jsonify({'status': 'healthy', 'service': 'urban-issues-reporter'}), 200
     
+    @app.route('/debug/images')
+    def debug_images():
+        """Debug endpoint to check images in database"""
+        db = get_db_connection()
+        images = list(db.images.find({}, {'filename': 1, 'mime_type': 1, 'created_at': 1}))
+        for img in images:
+            img['_id'] = str(img['_id'])
+        return jsonify({'count': len(images), 'images': images})
+    
     @app.route('/uploads/<filename>')
     def uploaded_file(filename):
         """Serve uploaded images from database"""
@@ -27,15 +36,20 @@ def init_routes(app):
         image_doc = db.images.find_one({'filename': filename})
         
         if image_doc and image_doc.get('image_data'):
-            # Decode base64 image data
-            image_binary = base64.b64decode(image_doc['image_data'])
-            return Response(image_binary, mimetype=image_doc.get('mime_type', 'image/jpeg'))
+            try:
+                # Decode base64 image data
+                image_binary = base64.b64decode(image_doc['image_data'])
+                return Response(image_binary, mimetype=image_doc.get('mime_type', 'image/jpeg'))
+            except Exception as e:
+                print(f"Error decoding image {filename}: {e}")
+                return 'Error decoding image', 500
         
         # Fallback: try to serve from file system if exists (for backward compatibility)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         if os.path.exists(file_path):
             return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
         
+        print(f"Image not found in database or filesystem: {filename}")
         return 'Image not found', 404
     
     @app.route('/')
