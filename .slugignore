@@ -1,0 +1,51 @@
+# Files to exclude from Render deployment
+# This reduces slug size and improves deployment speed
+
+# Development files
+tests/
+requirements-dev.txt
+*.md
+!README.md
+
+# Documentation
+API_DOCUMENTATION.md
+APPLICATION_STATUS.md
+DEPLOYMENT_QUICKSTART.md
+MONGODB_SETUP.md
+PROJECT_ARCHITECTURE.md
+QUICKSTART.md
+TESTING_GUIDE.md
+VOICE_INPUT_IMPROVEMENTS.md
+deployment/
+
+# Platform-specific build scripts
+start.bat
+build.sh
+
+# SQLite backups (using MongoDB)
+scripts/db_pool_sqlite_backup.py
+scripts/models_sqlite_backup.py
+scripts/backup/
+
+# Local database files
+*.db
+*.db-journal
+
+# Uploaded images (should use cloud storage)
+uploads/*.jpg
+uploads/*.jpeg
+uploads/*.png
+uploads/*.gif
+!uploads/.gitkeep
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+
+# Environment examples
+.env.example
