@@ -6,8 +6,8 @@ services:
     plan: free
     repo: https://github.com/satishkumarchandala/civic-snap
     branch: main
-    buildCommand: pip install --no-cache-dir -r requirements-prod.txt
-    startCommand: gunicorn wsgi:app --workers 2 --threads 4 --timeout 120 --max-requests 500 --max-requests-jitter 50 --worker-class gthread --worker-tmp-dir /dev/shm --preload --log-level info
+    buildCommand: pip install -r requirements-prod.txt
+    startCommand: gunicorn wsgi:app --workers 1 --threads 2 --timeout 300 --max-requests 1000 --max-requests-jitter 50 --worker-class gthread --worker-tmp-dir /dev/shm --log-level debug
     envVars:
       - key: FLASK_ENV
         value: production

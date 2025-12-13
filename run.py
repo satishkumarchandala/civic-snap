@@ -5,13 +5,17 @@ Supports both development and production modes
 import os
 import sys
 from flask import Flask
-from dotenv import load_dotenv
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(__file__))
 
-# Load environment variables
-load_dotenv()
+# Load environment variables only if dotenv is available (for local dev)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # In production (Render), environment variables are set directly
+    pass
 
 def create_app(config_name=None):
     """Application factory function"""

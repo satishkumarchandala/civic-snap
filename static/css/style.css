@@ -1587,3 +1587,19 @@ body {
         transform: translateY(0);
     }
 }
+
+/* Comment styles */
+.comment {
+    border-left: 4px solid #ddd;
+    background: #f9f9f9;
+}
+
+.comment-official {
+    border-left: 4px solid #667eea !important;
+    background: #f0f4ff !important;
+}
+
+.comment-regular {
+    border-left: 4px solid #ddd;
+    background: #f9f9f9;
+}

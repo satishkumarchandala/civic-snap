@@ -24,7 +24,7 @@ urban_issues*.db
 *_backup*.db
 *_sqlite_backup.py
 
-# Uploads (these should be in cloud storage for production)
+# Uploads
 uploads/*
 !uploads/.gitkeep
 
@@ -62,9 +62,6 @@ models/*.joblib
 htmlcov/
 .tox/
 .hypothesis/
-tests/
-conftest.py
-requirements-dev.txt
 
 # Documentation builds
 docs/_build/
@@ -79,15 +76,3 @@ site/
 # Flask
 instance/
 .webassets-cache
-
-# Deployment - Platform-specific files not needed on Render
-start.bat
-build.sh
-
-# SQLite backups (obsolete with MongoDB)
-scripts/db_pool_sqlite_backup.py
-scripts/models_sqlite_backup.py
-scripts/backup/
-
-# Old backup files
-*.old

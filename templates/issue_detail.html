@@ -56,35 +56,35 @@
                             <div class="factor-summary">
                                 <span class="factor-name">Severity</span>
                                 <div class="factor-bar">
-                                    <div class="factor-fill" style="width: {{ (breakdown.factor_scores.severity/10*100) }}%"></div>
+                                    <div class="factor-fill" style="width: {{ (breakdown.factor_scores.severity / 10 * 100)|round(1) }}%"></div>
                                 </div>
                                 <span class="factor-value">{{ "%.1f" | format(breakdown.factor_scores.severity) }}</span>
                             </div>
                             <div class="factor-summary">
                                 <span class="factor-name">Location</span>
                                 <div class="factor-bar">
-                                    <div class="factor-fill" style="width: {{ (breakdown.factor_scores.location/10*100) }}%"></div>
+                                    <div class="factor-fill" style="width: {{ (breakdown.factor_scores.location / 10 * 100)|round(1) }}%"></div>
                                 </div>
                                 <span class="factor-value">{{ "%.1f" | format(breakdown.factor_scores.location) }}</span>
                             </div>
                             <div class="factor-summary">
                                 <span class="factor-name">Reports</span>
                                 <div class="factor-bar">
-                                    <div class="factor-fill" style="width: {{ (breakdown.factor_scores.reports_count/10*100) }}%"></div>
+                                    <div class="factor-fill" style="width: {{ (breakdown.factor_scores.reports_count / 10 * 100)|round(1) }}%"></div>
                                 </div>
                                 <span class="factor-value">{{ "%.1f" | format(breakdown.factor_scores.reports_count) }}</span>
                             </div>
                             <div class="factor-summary">
                                 <span class="factor-name">Age</span>
                                 <div class="factor-bar">
-                                    <div class="factor-fill" style="width: {{ (breakdown.factor_scores.age/10*100) }}%"></div>
+                                    <div class="factor-fill" style="width: {{ (breakdown.factor_scores.age / 10 * 100)|round(1) }}%"></div>
                                 </div>
                                 <span class="factor-value">{{ "%.1f" | format(breakdown.factor_scores.age) }}</span>
                             </div>
                             <div class="factor-summary">
                                 <span class="factor-name">Safety</span>
                                 <div class="factor-bar">
-                                    <div class="factor-fill" style="width: {{ (breakdown.factor_scores.safety_impact/10*100) }}%"></div>
+                                    <div class="factor-fill" style="width: {{ (breakdown.factor_scores.safety_impact / 10 * 100)|round(1) }}%"></div>
                                 </div>
                                 <span class="factor-value">{{ "%.1f" | format(breakdown.factor_scores.safety_impact) }}</span>
                             </div>
@@ -206,10 +206,7 @@
             <!-- Comments List -->
             {% if comments %}
                 {% for comment in comments %}
-                <div class="comment" style="border-left: 4px solid {{ '#667eea' if comment.is_official else '#ddd' }}; 
-                                                 padding: 1.5rem; margin-bottom: 1.5rem; 
-                                                 background: {{ '#f0f4ff' if comment.is_official else '#f9f9f9' }}; 
-                                                 border-radius: 10px;">
+                <div class="comment {% if comment.is_official %}comment-official{% else %}comment-regular{% endif %}" style="padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 10px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <div>
                             <strong>{{ comment.user_name }}</strong>
@@ -278,16 +275,25 @@
 
 {% block scripts %}
 <script>
-// Initialize map
-let map = L.map('map').setView([{{ issue.latitude }}, {{ issue.longitude }}], 15);
+// Initialize map with coordinates
+const issueData = {
+    latitude: {{ issue.latitude }},
+    longitude: {{ issue.longitude }},
+    title: '{{ issue.title|replace("'", "\\'") }}'
+};
+let map = L.map('map').setView([issueData.latitude, issueData.longitude], 15);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-L.marker([{{ issue.latitude }}, {{ issue.longitude }}]).addTo(map)
-    .bindPopup('{{ issue.title }}')
+L.marker([issueData.latitude, issueData.longitude]).addTo(map)
+    .bindPopup(issueData.title)
     .openPopup();
 
 // Upvote function
+const isLoggedIn = {{ 'true' if session.user_id else 'false' }};
 async function upvoteIssue(issueId) {
-    {% if session.user_id %}
+    if (!isLoggedIn) {
+        alert('Please login to upvote issues!');
+        return;
+    }
     try {
         const response = await fetch(`/upvote/${issueId}`, {
             method: 'POST',
@@ -326,12 +332,10 @@ async function upvoteIssue(issueId) {
         console.error('Error:', error);
         alert('An error occurred while upvoting. Please try again.');
     }
-    {% else %}
-    alert('Please login to upvote issues!');
-    {% endif %}
 }
 
-{% if session.is_admin %}
+const isAdmin = {{ 'true' if session.is_admin else 'false' }};
+if (isAdmin) {
 function showStatusModal() {
     document.getElementById('statusModal').style.display = 'flex';
 }
@@ -339,6 +343,6 @@ function showStatusModal() {
 function hideStatusModal() {
     document.getElementById('statusModal').style.display = 'none';
 }
-{% endif %}
+}
 </script>
 {% endblock %}
